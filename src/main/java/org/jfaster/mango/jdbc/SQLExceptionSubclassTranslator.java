@@ -32,34 +32,46 @@ public class SQLExceptionSubclassTranslator extends AbstractFallbackSQLException
   @Override
   protected DataAccessException doTranslate(String sql, SQLException ex) {
     if (ex instanceof SQLTransientException) {
-      if (ex instanceof SQLTransactionRollbackException) {
-        return new ConcurrencyFailureException(buildMessage(sql, ex), ex);
-      }
-      if (ex instanceof SQLTransientConnectionException) {
-        return new TransientDataAccessResourceException(buildMessage(sql, ex), ex);
-      }
-      if (ex instanceof SQLTimeoutException) {
-        return new QueryTimeoutException(buildMessage(sql, ex), ex);
-      }
+        return handleTransientException(sql, ex);
     } else if (ex instanceof SQLNonTransientException) {
-      if (ex instanceof SQLDataException) {
-        return new DataIntegrityViolationException(buildMessage(sql, ex), ex);
-      } else if (ex instanceof SQLFeatureNotSupportedException) {
-        return new InvalidDataAccessApiUsageException(buildMessage(sql, ex), ex);
-      } else if (ex instanceof SQLIntegrityConstraintViolationException) {
-        return new DataIntegrityViolationException(buildMessage(sql, ex), ex);
-      } else if (ex instanceof SQLInvalidAuthorizationSpecException) {
-        return new PermissionDeniedDataAccessException(buildMessage(sql, ex), ex);
-      } else if (ex instanceof SQLNonTransientConnectionException) {
-        return new DataAccessResourceFailureException(buildMessage(sql, ex), ex);
-      } else if (ex instanceof SQLSyntaxErrorException) {
-        return new BadSqlGrammarException(sql, ex);
-      }
+        return handleNonTransientException(sql, ex);
     } else if (ex instanceof SQLRecoverableException) {
-      return new RecoverableDataAccessException(buildMessage(sql, ex), ex);
+        return new RecoverableDataAccessException(buildMessage(sql, ex), ex);
     }
-
     return null;
+}
+
+private DataAccessException handleTransientException(String sql, SQLException ex) {
+    if (ex instanceof SQLTransactionRollbackException) {
+        return new ConcurrencyFailureException(buildMessage(sql, ex), ex);
+    }
+    if (ex instanceof SQLTransientConnectionException) {
+        return new TransientDataAccessResourceException(buildMessage(sql, ex), ex);
+    }
+    if (ex instanceof SQLTimeoutException) {
+        return new QueryTimeoutException(buildMessage(sql, ex), ex);
+    }
+    return null;
+}
+
+private DataAccessException handleNonTransientException(String sql, SQLException ex) {
+    if (ex instanceof SQLDataException) {
+        return new DataIntegrityViolationException(buildMessage(sql, ex), ex);
+    } else if (ex instanceof SQLFeatureNotSupportedException) {
+        return new InvalidDataAccessApiUsageException(buildMessage(sql, ex), ex);
+    } else if (ex instanceof SQLIntegrityConstraintViolationException) {
+        return new DataIntegrityViolationException(buildMessage(sql, ex), ex);
+    } else if (ex instanceof SQLInvalidAuthorizationSpecException) {
+        return new PermissionDeniedDataAccessException(buildMessage(sql, ex), ex);
+    } else if (ex instanceof SQLNonTransientConnectionException) {
+        return new DataAccessResourceFailureException(buildMessage(sql, ex), ex);
+    } else if (ex instanceof SQLSyntaxErrorException) {
+        return new BadSqlGrammarException(sql, ex);
+    }
+    return null;
+}
+
+//Refactoring end
   }
 
 }
